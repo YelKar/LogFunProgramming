@@ -77,6 +77,7 @@
   )
 )
 
+
 (define (merge-sorted a b)
   (cond 
     [(empty? b) a]
@@ -93,11 +94,16 @@
   )
 )
 
-;(define (split-on sep lst)
-;  (cond
-;    [] 
-;  )
-;)
+(define (split-on sep lst)
+  (define (concat lst split-res) 
+    (cons (cons (first lst) (first split-res)) (rest split-res))
+  )
+  (cond
+    [(empty? lst) '(())]
+    [(equal? (first lst) sep) (cons '() (split-on sep (rest lst)))]
+    [else (concat lst (split-on sep (rest lst)))]
+  )
+)
 
 (check-equal? (index-of 3 '(1 3 5 3)) 1)
 (check-equal? (index-of 4 '(1 3 5)) #f)
@@ -111,11 +117,11 @@
 (check-equal? (rotate-left '(1 2 3 4 5) 2) '(3 4 5 1 2))
 (check-equal? (rotate-left '(1 2 3) 0) '(1 2 3))
 (check-equal? (rotate-left '(1 2 3) 3) '(1 2 3))
-;(check-equal? (split-on 0 '(1 2 0 3 0 0 4)) '((1 2) (3) () (4)))
-;(check-equal? (split-on 0 '(0)) '(() ()))
-;(check-equal? (split-on 0 '()) '(()))
-;(check-equal? (split-on 0 '(1 2)) '((1 2)))
-;(check-equal? (split-on #\newline (string->list "ok\nfail\n")) '((#\o #\k) (#\f #\a #\i #\l) ()))
+(check-equal? (split-on 0 '(1 2 0 3 0 0 4)) '((1 2) (3) () (4)))
+(check-equal? (split-on 0 '(0)) '(() ()))
+(check-equal? (split-on 0 '()) '(()))
+(check-equal? (split-on 0 '(1 2)) '((1 2)))
+(check-equal? (split-on #\newline (string->list "ok\nfail\n")) '((#\o #\k) (#\f #\a #\i #\l) ()))
 
 ;; ============================================================================
 ;; Задача 1.2. Параметр-аккумулятор
@@ -167,7 +173,13 @@
 
 ;; (г) Вычисление (digits 205) по подстановочной модели:
 ;;   (digits 205)
-;;   = ...
+;;   = (go 205 '())
+;;   = (go (quotient 205 10) cons (remainder n 10) '())
+;;   = (go 20 '(5 ()))
+;;   = (go (quotient 20 10) cons (remainder 20 10) '(5))
+;;   = (go 2 '(0 5))
+;;   = (cons 2 '(0 5))
+;;   = '(2 0 5)
 
 (check-equal? (digits 2026) '(2 0 2 6))
 (check-equal? (digits 0) '(0))
@@ -186,7 +198,7 @@
 ;; Я не использовал(а) ИИ при решении этой задачи.
 ;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
-(define (feedback guess answer)
+(define (feedback:wrong guess answer)
   (define (green-pass g a) 
      (cond
       [(or (empty? g) (empty? a)) '()]
@@ -252,6 +264,24 @@
 
 ;;(feedback (word->list "топор") (word->list "ротор"))
 
+;(define (feedback guess answer) 
+;  (define green
+;    (map
+;      (lambda (g a) (and (equal? g a) 'green))
+;      guess, answer
+;    )
+;  )
+;  (define unknown-letters
+;    (map 
+;      second 
+;      (filter 
+;        (lambda (letter) (not (equal? (first letter) 'green)))
+;
+;      )
+;    )
+;  )
+;)
+
 
 (define (consistent? word guess fb)
   'todo)
@@ -294,12 +324,41 @@
 ;; (а) (my-length (merge-sorted a b)) = (+ (my-length a) (my-length b))
 ;;
 ;; Доказательство:
-;;   ...
+;; (my-length a) --> (len a):
+;; Если a = '():
+;; (len '())
+;; = (cond [empty? '()] 0)
+;; = 0
+;; Иначе a = '(1 2 3 4 ... n):
+;; (len a)
+;; = (+ 1 (len (rest a)))
+;; = (+ 2 (len (rest (rest a))))
+;; = ...
+;; = (+ n (len '()))
+;; = (+ n 0)
+;; = n
+;;
+;; Если a = '() или b = '():
+;; (len (merge-sorted '() b))
+;; = (length (cond [(empty? '()) b])) 
+;; = (len b) 
+;; = (+ (len b) (len '()))
+;; = (+ (len b) (len a))
+;; = (+ (len b) 0)
+;;
+;; Иначе:
+;; (len (merge-sorted a b)) 
+;; = (len (cons (first a) (merge-sorted (rest a) b))) 
+;; = (+ 1 (len (merge-sorted (rest a) b)))
+;; = (+ 2 (len (merge-sorted (rest (rest a)) b)))
+;; = (+ (len a) (merge-sorted '() b))
+;; = (+ (len a) (len b))
+;;
 ;;
 ;; (б) (dedupe-adjacent (dedupe-adjacent lst)) = (dedupe-adjacent lst)
 ;;
 ;; Доказательство:
-;;   ...
+;;   dedupe возвращает список соответствующей
 
 ;; ============================================================================
 ;; Задача 1.5. Функции как значения
