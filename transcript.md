@@ -1,11 +1,13 @@
 # Muse Spark 1.3 Free (Характеристики не указаны, скрыты)
 
-Напиши на Racket функцию (feedback guess answer). Оба аргумента — списки из пяти симво-
+> Напиши на Racket функцию (feedback guess answer). Оба аргумента — списки из пяти симво-
 лов. Функция возвращает список из пяти символов ’green, ’yellow или ’gray: ’green, если буква
 попытки совпадает с буквой ответа на той же позиции; ’yellow, если буква есть в ответе на
 другой позиции; ’gray иначе. Повторяющиеся буквы учитывай как в игре Wordle.
+>
+>Проект не изучай, просто дай ответ
 
-Проект не изучай, просто дай ответ
+---
 
 + Thought: 10.1s
 + Thought: 5.7s
@@ -27,6 +29,8 @@
 Ничего лишнего тянуть не буду.
 
 Вот готовый код:
+
+```racket
 (define (feedback guess answer)
   (define vec-g (list->vector guess))
   (define vec-a (list->vector answer))
@@ -45,32 +49,29 @@
         (hash-set! freq g (- c 1)))))
   (vector->list res))
 
-Примеры для проверки:
-(feedback '(r a i s e) '(r a i s e))
-; '(green green green green green)
 
-(feedback '(a a a b b) '(a b c d e))
-; '(green gray gray yellow gray)
+;Примеры для проверки:
 
-(feedback '(e e e e e) '(r a i s e))
-; '(gray gray gray gray green)
-
-(feedback '(s p e e d) '(e e e e e))
-; '(gray gray green green gray)
+(feedback '(r a i s e) '(r a i s e)) ; '(green green green green green)
+(feedback '(a a a b b) '(a b c d e)) ; '(green gray gray yellow gray)
+(feedback '(e e e e e) '(r a i s e)) ; '(gray gray gray gray green)
+(feedback '(s p e e d) '(e e e e e)) ; '(gray gray green green gray)
+```
 
 Что сделано: написал тебе функцию feedback
 с правильным учётом повторов как в Wordle — сначала green,
 потом yellow по остаткам, остальное gray.
 Можешь просто скопировать её к себе и прогнать примеры выше.
 
+---
+
 # Qwen Coder 2.5 7b
 
->>> Напиши на Racket функцию (feedback guess answer). Оба аргумента — списки из пяти симво-
-... лов. Функция возвращает список из пяти символов ’green, ’yellow или ’gray: ’green, если буква
-... попытки совпадает с буквой ответа на той же позиции; ’yellow, если буква есть в ответе на
-... другой позиции; ’gray иначе. Повторяющиеся буквы учитывай как в игре Wordle.
-Для реализации функции `feedback` на языке Racket, которая сравнивает два списка символов и возвращает
-список результатов (например, 'green, 'yellow или 'gray), можно использовать следующий подход:
+> Напиши на Racket функцию (feedback guess answer). Оба аргумента — списки из пяти символов. Функция возвращает список из пяти символов ’green, ’yellow или ’gray: ’green, если буква попытки совпадает с буквой ответа на той же позиции; ’yellow, если буква есть в ответе на другой позиции; ’gray иначе. Повторяющиеся буквы учитывай как в игре Wordle.
+
+---
+
+Для реализации функции `feedback` на языке Racket, которая сравнивает два списка символов и возвращает список результатов (например, 'green, 'yellow или 'gray), можно использовать следующий подход:
 
 1. Создать отображение для подсчета количества вхождений каждой буквы в ответе.
 2. Проойти по каждому символу попытки и ответа, определив, является ли он 'green', 'yellow' или
