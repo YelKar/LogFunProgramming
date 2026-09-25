@@ -45,6 +45,72 @@
 ;              [else
 ;               (loop (+ i 1) 'gray' (cdr guess-list) (cdr answer-list))]))))))
 
+(define (feedback-qwen-coder guess answer)
+  (define answer-counts (make-hash))
+  (for ([char (in-list answer)])
+    (hash-set! answer-counts char (add1 (hash-ref answer-counts char 0))))
+  
+  (define result (make-vector 5))
+  (define (set-result idx color)
+    (vector-set! result idx color))
+  
+  (define (try-green guess-index)
+    (let ([guess-char (list-ref guess guess-index)]
+          [answer-char (list-ref answer guess-index)])
+      (when (char=? guess-char answer-char)
+        (set-result guess-index 'green)
+        (hash-update! answer-counts guess-char sub1))))
+  
+  (define (try-yellow guess-index)
+    (let ([guess-char (list-ref guess guess-index)])
+      (when (hash-has-key? answer-counts guess-char)
+        (if (> (hash-ref answer-counts guess-char) 0)
+            (begin
+              (set-result guess-index 'yellow)
+              (hash-update! answer-counts guess-char sub1))
+            #f))))
+  
+  (for ([i (in-range 5)])
+    (if (try-green i)
+        #f
+        (try-yellow i)))
+  
+  (vector->list result))
+
+(define (feedback-qwen-coder-fixed guess answer)
+  (define answer-counts (make-hash))
+  (for ([char (in-list answer)])
+    (hash-set! answer-counts char (add1 (hash-ref answer-counts char 0))))
+  (define result (make-vector 5 'gray))
+  (define (set-result idx color)
+    (vector-set! result idx color))
+  
+  (define (try-green guess-index)
+    (let ([guess-char (list-ref guess guess-index)]
+          [answer-char (list-ref answer guess-index)])
+      (when (char=? guess-char answer-char)
+        (set-result guess-index 'green)
+        (hash-update! answer-counts guess-char sub1))
+      (unless (char=? guess-char answer-char)
+        #f
+      )
+      ))
+  
+  (define (try-yellow guess-index)
+    (let ([guess-char (list-ref guess guess-index)])
+      (when (hash-has-key? answer-counts guess-char)
+        (if (> (hash-ref answer-counts guess-char) 0)
+            (begin
+              (set-result guess-index 'yellow)
+              (hash-update! answer-counts guess-char sub1))
+            #f))))
+  
+  (for ([i (in-range 5)])
+    (if (try-green i)
+        #f
+        (try-yellow i)))
+  
+  (vector->list result))
 
 
 ;; (б) Четыре проверки, из них хотя бы две с повторяющимися буквами.
@@ -58,14 +124,19 @@
 ;; Проверка 4: ...
 
 (define (check-feedback func)
-  (check-equal? (func '(m o u s e) '(m o u s e)) '(green green green green green)) ; полное совпадение
-  (check-equal? (func '(m u m m a) '(m m a u o)) '(green yellow yellow gray yellow)) ; Повторяющиеся буквы
-  (check-equal? (func '(m o u s e) '(e m o u s)) '(yellow yellow yellow yellow yellow)) ; Все жёлтые
-  (check-equal? (func '(m o u s e) '(c l i c k)) '(gray gray gray gray gray)) ; Все серые
+  (check-equal? (func (string->list "mouse") (string->list "mouse")) '(green green green green green)) ; полное совпадение
+  (check-equal? (func (string->list "mumma") (string->list "mmauo")) '(green yellow yellow gray yellow)) ; Повторяющиеся буквы
+  (check-equal? (func (string->list "mouse") (string->list "emous")) '(yellow yellow yellow yellow yellow)) ; Все жёлтые
+  (check-equal? (func (string->list "mouse") (string->list "click")) '(gray gray gray gray gray)) ; Все серые
 )
 
 (check-feedback feedback-muse-spark)
+
 ;; (в) Наименьший контрпример и исправление, либо объяснение, почему
 ;;     правило повторов соблюдено (с указанием строк).
 ;;
 ;; ...
+;; контрпример
+(check-equal? (feedback-qwen-coder (string->list "mouse") (string->list "click")) '(gray gray gray gray gray))
+
+(check-feedback feedback-qwen-coder-fixed)
