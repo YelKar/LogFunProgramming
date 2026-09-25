@@ -55,7 +55,6 @@
 ;; Задача 1.1. Списки явной рекурсией
 ;; ============================================================================
 ;; Я не использовал(а) ИИ при решении этой задачи.
-;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
 (define (index-of x lst)
     (cond 
@@ -127,7 +126,6 @@
 ;; Задача 1.2. Параметр-аккумулятор
 ;; ============================================================================
 ;; Я не использовал(а) ИИ при решении этой задачи.
-;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
 (define (digits n)
   (define (go n acc)
@@ -196,7 +194,6 @@
 ;; Задача 1.3. Игра в слова
 ;; ============================================================================
 ;; Я не использовал(а) ИИ при решении этой задачи.
-;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
 (define (feedback:wrong guess answer)
   (define (green-pass g a) 
@@ -262,35 +259,149 @@
     )
 )
 
-;;(feedback (word->list "топор") (word->list "ротор"))
 
-;(define (feedback guess answer) 
-;  (define green
-;    (map
-;      (lambda (g a) (and (equal? g a) 'green))
-;      guess, answer
-;    )
-;  )
-;  (define unknown-letters
-;    (map 
-;      second 
-;      (filter 
-;        (lambda (letter) (not (equal? (first letter) 'green)))
-;
-;      )
-;    )
-;  )
+(define (feedback guess answer) 
+  (define green
+    (map
+      (lambda (g a) (and (equal? g a) 'green))
+      guess answer
+    )
+  )
+
+  (define unknown-letters
+    (map cdr (filter 
+       (lambda (letter) (not (equal? (car letter) 'green)))
+       (map cons green answer)
+    ))
+  )
+
+
+  (define (check-yellow letter answer) 
+    (foldl 
+      (lambda (elt acc)
+        (cond 
+          [(first acc) (cons #t (cons elt (rest acc)))]
+          [(equal? elt letter) (cons #t (rest acc))]
+          [else (cons #f (cons elt (rest acc)))]
+        )
+      )
+      (cons #f '())
+      answer
+    )
+  )
+
+  (define reversed-result 
+    (foldl
+      (lambda (guess-letter green-letter acc) 
+        (cond 
+          [(equal? green-letter 'green) (cons (cons 'green (car acc)) (cdr acc))]
+          [else 
+            (define res (check-yellow guess-letter (cdr acc)))
+            (cond
+              [(first res) (cons (cons 'yellow (car acc)) (cdr res))]
+              [else (cons (cons 'gray (car acc)) (cdr res))]
+            )
+          ]
+        )
+      )
+      (cons '() unknown-letters)
+      guess 
+      green
+    )
+  )
+   
+  
+  (reverse (car reversed-result))
+)
+
+;(define (consistent? word guess fb)
+;  (equal? (feedback guess word) fb)
 ;)
 
-
 (define (consistent? word guess fb)
-  'todo)
+  (define (correct-yellow? w g f) 
+    (define unknown
+      (filter
+        (lambda (l) (not (equal? (first l) 'green)))
+        (map list f w g)
+      )
+    )
+    (define unknown-fb (map first unknown))
+    (define unknown-word (map second unknown))
+    (define unknown-guess (map third unknown))
+    (define (correct-letter? letter letter-fb rest-letters)
+      (define res (foldl 
+        (lambda (rl acc)
+          (cond 
+            [(first acc) (cons #t (cons rl (rest acc)))]
+            [(equal? rl letter) (cons #t (rest acc))]
+            [else (cons #f (cons rl (rest acc)))]
+          )
+        )
+        (cons #f '())
+        rest-letters
+      ))
+      (cons (equal? (equal? letter-fb 'yellow) (car res)) (cdr res))
+    )
+    (car (foldl 
+      (lambda (l lf acc)
+        (cond
+          [(car acc)
+            (define letter-check-res (correct-letter? l lf (rest acc)))
+            (cons (car letter-check-res) (rest letter-check-res))
+          ]
+          [else acc]
+        )
+      )
+      (cons #t unknown-word)
+      unknown-guess
+      unknown-fb
+    ))
+  )
+  
+  (and 
+    (andmap (lambda (letter g letter-fb)
+      (cond 
+        [(equal? letter-fb 'green) (equal? letter g)]
+        [else (not (equal? letter g))]
+      ))
+      word 
+      guess 
+      fb
+    )
+    (correct-yellow? word guess fb)  
+  )
+)
 
 (define (candidates dict guess fb)
-  'todo)
+   (filter (lambda (word) (consistent? word guess fb)) dict)
+)
 
 (define (best-guess dict)
-  'todo)
+  (define (score guess)
+    (length
+      (remove-duplicates
+        (map
+          (lambda (word) (feedback guess word))
+          dict
+        )
+      )
+    )
+  )
+
+  (first
+    (foldl
+      (lambda (guess best)
+        (cond
+          [(> (score guess) (first (rest best))) (list guess (score guess))]
+          [else best]
+        )
+      )
+      (list (first dict) (score (first dict)))
+      (rest dict)
+    )
+  )
+)
 
 (check-equal? (feedback (word->list "топор") (word->list "ротор"))
               '(yellow green gray green green))
@@ -319,7 +430,6 @@
 ;; Задача 1.4. Подстановочная модель
 ;; ============================================================================
 ;; Я не использовал(а) ИИ при решении этой задачи.
-;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 ;;
 ;; (а) (my-length (merge-sorted a b)) = (+ (my-length a) (my-length b))
 ;;
@@ -364,22 +474,31 @@
 ;; Задача 1.5. Функции как значения
 ;; ============================================================================
 ;; Я не использовал(а) ИИ при решении этой задачи.
-;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
 (define (negate p)
-  'todo)
+  (lambda (x) (not (p x)))
+)
 
 (define (all-of ps)
-  'todo)
+  (lambda (x) (andmap (lambda (p) (p x)) ps))
+)
 
 (define (compose2 f g)
-  'todo)
+  (lambda (x) (f (g x)))
+)
 
 (define (on cmp key)
-  'todo)
+  (lambda (x y) (cmp (key x) (key y)))
+)
 
 (define (argmax-by f lst)
-  'todo)
+  (foldl (lambda (elt mx)
+    (cond
+      [(> (f elt) (f mx)) elt]
+      [else mx]
+    )
+  ) (first lst) (rest lst))
+)
 
 ;; (г) Почему (4) осталось перед (7), и что было бы при (on <= length):
 ;;   ...
@@ -397,23 +516,84 @@
 ;; ============================================================================
 ;; Задача 1.6. Свёртки и история коммитов
 ;; ============================================================================
-;; Я не использовал(а) ИИ при решении этой задачи.
+
 ;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
 (define (count-if p lst)
-  'todo)
+  (foldl
+    (lambda (x sum)
+      (cond
+        [(p x) (+ sum 1)]
+        [else sum]
+      )
+    )
+    0
+    lst
+  )
+)
 
 (define (my-map f lst)
-  'todo)
+  (foldl 
+    (lambda (x acc) (cons (f x) acc))
+    '()
+    (reverse lst)
+  )
+)
 
 (define (repo-size commits)
-  'todo)
+  (foldl 
+    (lambda (commit line-count)
+      (+ line-count (- (commit-added commit) (commit-deleted commit)))
+    )
+    0
+    commits
+  )
+)
 
 (define (peak-size commits)
-  'todo)
+  (car (foldl 
+    (lambda (commit max.current)
+      (define current (+ (cdr max.current) (- (commit-added commit) (commit-deleted commit))))
+      (cons (if (> current (car max.current)) current (car max.current)) current)
+    )
+    '(0 . 0)
+    commits
+  ))
+)
 
 (define (added-by-author commits)
-  'todo)
+  (define (add-to-author new-commit commits)
+    (define author (commit-author new-commit))
+    (define line-count (commit-added new-commit))
+    (define added?.commits (foldl
+      (lambda (commit added?.acc)
+        (define added? (or (car added?.acc) (equal? (car commit) author)))
+        (define acc (cdr added?.acc))
+        (cons added? (cons
+          (cons
+            (car commit)
+            (cond
+              [(equal? (car commit) author) (+ (cdr commit) line-count)]
+              [else (cdr commit)]
+            )
+          )
+          acc
+        ))
+      )
+      '(#f . ())
+      commits
+    ))
+    (reverse (cond
+      [(car added?.commits) (cdr added?.commits)]
+      [else (cons (cons author line-count) (cdr added?.commits))]
+    ))
+  )
+  (foldl
+    add-to-author
+    '()
+    commits
+  )
+)
 
 (define commits
   '(("Аня" 120 10) ("Борис" 40 60) ("Вера" 0 80) ("Аня" 5 5)))
@@ -431,23 +611,80 @@
 ;; ============================================================================
 ;; Задача 1.7. Конвейеры и сборки CI
 ;; ============================================================================
-;; Я не использовал(а) ИИ при решении этой задачи.
 ;; Я использовал(а) ИИ (<модель>) в <части> этой задачи в соответствии с правилами курса и условием.
 
+(define (build-success? build) (equal? (build-status build) 'ok))
+
 (define (passed builds)
-  'todo)
+  (count-if build-success? builds)
+)
 
 (define (branches-of builds)
-  'todo)
+  (remove-duplicates (map build-branch builds))
+)
 
 (define (success-table builds)
-  'todo)
+  (define (add-build-to-table build table)
+    (define branch (build-branch build))
+    (foldl 
+      (lambda (table-row acc)
+        (define table-branch (car table-row))
+        (define found? (equal? branch table-branch))
+        (define state (cdr table-row))
+        (cons (cons 
+          table-branch 
+          (cond
+            [found? 
+              (cond 
+                [(build-success? build) (cons (+ 1 (car state)) (+ (cdr state) 1))]
+                [else (cons (car state) (+ 1 (cdr state)))]
+              )
+            ]
+            [else state]
+          ))
+          acc
+        )
+      )
+      '()
+      table
+    )
+  )
+  (define (get-ratio ok fail)
+    (cond
+      [(equal? ok 0) 0]
+      [(equal? fail 0) 1]
+      [else (/ ok fail)]
+    )
+  )
+  (sort 
+    (map 
+      (lambda (table-row) (cons (car table-row) (get-ratio (car (cdr table-row)) (cdr (cdr table-row))))) 
+      (foldl 
+        add-build-to-table
+        (remove-duplicates (map (lambda (build) (cons (build-branch build) '(0 . 0))) builds))
+        builds
+      )
+    )
+    (on > cdr)
+  )
+)
 
 (define (stable-branches builds)
-  'todo)
+  (map car (filter (compose2 integer? cdr) (success-table builds)))
+)
 
 (define (slowest builds)
-  'todo)
+  (foldl 
+    (lambda (build slowest-one)
+      (cond
+        [(> (build-seconds build) (build-seconds slowest-one)) build]
+        [else slowest-one]
+      )
+    )
+    (first builds)
+    (rest builds)
+  )
+)
 
 (define builds
   '(("main" ok 210) ("main" fail 190) ("feature-login" ok 320)
@@ -456,6 +693,7 @@
 (check-equal? (passed builds) 4)
 (check-equal? (branches-of builds) '("main" "feature-login" "hotfix"))
 (check-equal? (success-table builds) '(("hotfix" . 1) ("main" . 2/3) ("feature-login" . 1/2)))
+(check-equal? (success-table (cons '("other" fail 123) (cons '("other" ok 123) builds))) '(("hotfix" . 1) ("main" . 2/3) ("other" . 1/2) ("feature-login" . 1/2)))
 (check-equal? (stable-branches builds) '("hotfix"))
 (check-equal? (slowest builds) '("feature-login" ok 320))
 
