@@ -90,7 +90,7 @@
   (define result (make-vector 5 'gray))
   (define (set-result idx color)
     (vector-set! result idx color))
-  
+  (displayln answer-counts)  
   (define (try-green guess-index)
     (let ([guess-char (list-ref guess guess-index)]
           [answer-char (list-ref answer guess-index)])
@@ -105,6 +105,7 @@
   (define (try-yellow guess-index)
     (let ([guess-char (list-ref guess guess-index)])
       (when (hash-has-key? answer-counts guess-char)
+        (display "yellow") (displayln guess-char)
         (if (> (hash-ref answer-counts guess-char) 0)
             (begin
               (set-result guess-index 'yellow)
@@ -112,6 +113,7 @@
             #f))))
   
   (for ([i (in-range 5)])
+    (displayln answer-counts)
     (if (try-green i)
         #f
         (try-yellow i)))
@@ -136,8 +138,8 @@
   (check-equal? (func (string->list "mouse") (string->list "click")) '(gray gray gray gray gray)) ; Все серые
 )
 
-(check-feedback feedback-muse-spark)
-
+;(check-feedback feedback-muse-spark)
+(feedback-qwen-coder-fixed (string->list "aaaaa") (string->list "aaaba"))
 ;; (в) Наименьший контрпример и исправление, либо объяснение, почему
 ;;     правило повторов соблюдено (с указанием строк).
 ;;

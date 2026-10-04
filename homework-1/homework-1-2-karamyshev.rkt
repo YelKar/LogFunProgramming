@@ -468,7 +468,18 @@
 ;; (б) (dedupe-adjacent (dedupe-adjacent lst)) = (dedupe-adjacent lst)
 ;;
 ;; Доказательство:
-;;   dedupe возвращает список соответствующей
+;;   Пусть:
+;;     (first lst) != x и (> (length lst) 1)
+;;   Тогда:
+;;     (dedupe-adjacent (cons x lst)) 
+;;     = (cons (first (cons x lst)) (dedupe-adjacent (rest (cons x lst))))
+;;     = (cons x (dedupe-adjacent lst))
+;;
+;;     (first lst) != x ==> (dedupe-adjacent (cons x lst)) = (cons x (dedupe-adjacent lst))
+;;
+;;     ()
+;;
+;;     
 
 ;; ============================================================================
 ;; Задача 1.5. Функции как значения
@@ -626,7 +637,7 @@
 (define (success-table builds)
   (define (add-build-to-table build table)
     (define branch (build-branch build))
-    (foldl 
+    (reverse (foldl 
       (lambda (table-row acc)
         (define table-branch (car table-row))
         (define found? (equal? branch table-branch))
@@ -647,7 +658,7 @@
       )
       '()
       table
-    )
+    ))
   )
   (define (get-ratio ok fail)
     (cond
@@ -670,31 +681,37 @@
 )
 
 (define (stable-branches builds)
-  (map car (filter (compose2 integer? cdr) (success-table builds)))
+  (map car (filter (compose2 (lambda (x) (= x 1)) cdr) (success-table builds)))
 )
 
 (define (slowest builds)
-  (foldl 
-    (lambda (build slowest-one)
-      (cond
-        [(> (build-seconds build) (build-seconds slowest-one)) build]
-        [else slowest-one]
-      )
-    )
-    (first builds)
-    (rest builds)
-  )
+;  (foldl 
+;    (lambda (build slowest-one)
+;      (cond
+;        [(> (build-seconds build) (build-seconds slowest-one)) build]
+;        [else slowest-one]
+;      )
+;    )
+;    (first builds)
+;    (rest builds)
+;  )
+  (argmax-by build-seconds builds)
 )
 
 (define builds
   '(("main" ok 210) ("main" fail 190) ("feature-login" ok 320)
     ("main" ok 205) ("feature-login" fail 300) ("hotfix" ok 95)))
 
+(define builds2 
+  '(("a" ok 213) ("b" ok 10) ("c" ok 100))
+)
+
 (check-equal? (passed builds) 4)
 (check-equal? (branches-of builds) '("main" "feature-login" "hotfix"))
 (check-equal? (success-table builds) '(("hotfix" . 1) ("main" . 2/3) ("feature-login" . 1/2)))
 (check-equal? (success-table (cons '("other" fail 123) (cons '("other" ok 123) builds))) '(("hotfix" . 1) ("main" . 2/3) ("other" . 1/2) ("feature-login" . 1/2)))
+(check-equal? (success-table builds2) '(("a" . 1) ("b" . 1) ("c" . 1)))
 (check-equal? (stable-branches builds) '("hotfix"))
 (check-equal? (slowest builds) '("feature-login" ok 320))
-
+(check-equal? (stable-branches '(("bad" fail 1) ("good" ok 2))) '("good"))
 
