@@ -155,7 +155,7 @@
 
 (define (signal-sequence phases cycles)
   (in-generator
-     (define signal (make-signal phases))
+    (define signal (make-signal phases))
     (for 
       ([i 
         (in-range 
@@ -198,8 +198,10 @@
   (let ([balance initial] [history '()])
     (define (deposit! value)
       (set! balance (+ balance value))
-      (set! history
-            (append history (list (list 'deposit value))))
+      (set! history (append 
+        history 
+        (list (list 'deposit value))
+      ))
       balance
     )
 
@@ -277,22 +279,58 @@
 ;; 2.8. Правила событий
 
 (define (login-block observation)
-  'TODO)
+  (define event (car observation))
+  (define p (cdr observation))
+  (and 
+    (equal? event 'login)
+    (>= p 0.8)
+    (list 'block 'login p)
+  )
+)
 
 (define (payment-review observation)
-  'TODO)
+  (define event (car observation))
+  (define p (cdr observation))
+  (and
+    (equal? event 'payment)
+    (>= p 0.6)
+    (list 'review 'payment p)
+  )
+)
 
 (define (timeout-retry observation)
-  'TODO)
+  (define event (car observation))
+  (define p (cdr observation))
+  (and
+    (equal? event 'timeout)
+    (>= p 0.7)
+    (list 'retry 'timeout p)
+  )
+)
 
 (define (audit-event observation)
-  'TODO)
+  (define event (car observation))
+  (define p (cdr observation))
+  (and
+    (>= p 0.95)
+    (list 'audit event p)
+  )
+)
 
 (define event-rules
   (list login-block payment-review timeout-retry audit-event))
 
 (define (apply-event-rules rules observations)
-  'TODO)
+  (stream-flat-map
+    (lambda (observation)
+      (stream-filter
+        (compose not false?)
+        (stream-map (lambda (rule) (rule observation)) rules)
+      )
+    )
+    observations
+  )
+)
 
 ;; 2.9. Вставьте первую версию make-readers из ответа ИИ или свою первую
 ;; версию. Не исправляйте её до проверок: ниже покажите контрпример, затем
